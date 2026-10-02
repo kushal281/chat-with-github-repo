@@ -11,3 +11,7 @@ class RepoStatus(BaseModel):
     status: str
     chunk_count: int
     error: str | None = None
+
+
+class ChatRequest(BaseModel):
+    question: str

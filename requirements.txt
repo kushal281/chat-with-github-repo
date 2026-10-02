@@ -4,3 +4,4 @@ pydantic-settings
 chromadb
 sentence-transformers
 pytest
+google-genai

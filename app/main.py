@@ -7,6 +7,11 @@ from app.db import create_repo, get_repo, init_db
 from app.ingest.fetch import parse_repo_url
 from app.ingest.pipeline import run_ingestion
 from app.models import RepoCreate, RepoStatus
+from app.llm.answer import answer_question
+from app.models import ChatRequest, RepoCreate, RepoStatus
+import logging
+
+logger = logging.getLogger("uvicorn.error")
 
 
 @asynccontextmanager
@@ -40,3 +45,17 @@ def repo_status(repo_id: str):
     if not repo:
         raise HTTPException(status_code=404, detail="Repo not found")
     return repo
+
+
+@app.post("/repos/{repo_id}/chat")
+def chat(repo_id: str, body: ChatRequest):
+    repo = get_repo(repo_id)
+    if not repo:
+        raise HTTPException(status_code=404, detail="Repo not found")
+    if repo["status"] != "ready":
+        raise HTTPException(status_code=409, detail=f"Repo is {repo['status']}")
+    try:
+        return answer_question(repo_id, body.question)
+    except Exception:
+        logger.exception("LLM request failed")
+        raise HTTPException(status_code=502, detail="LLM request failed")
