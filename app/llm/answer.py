@@ -7,17 +7,33 @@ from app.retrieval.store import query
 CITATION = re.compile(r"\[([^\[\]]+?):(\d+)-(\d+)\]")
 
 
+def _find_chunk(chunks, path, start, end):
+    return next(
+        (c for c in chunks
+         if c["path"] == path and c["start_line"] <= start <= end <= c["end_line"]),
+        None,
+    )
+
+
 def answer_question(repo_id: str, question: str, k: int = 5) -> dict:
     chunks = query(repo_id, question, k)
     text = get_llm().complete(SYSTEM_PROMPT, build_user_prompt(question, chunks))
+    sources, ids = [], {}
 
-    by_range = {(c["path"], c["start_line"], c["end_line"]): c for c in chunks}
-    sources, seen = [], set()
-    for path, start, end in CITATION.findall(text):
-        key = (path, int(start), int(end))
-        if key in by_range and key not in seen:
-            seen.add(key)
+    def number_citation(m):
+        path, start, end = m.group(1), int(m.group(2)), int(m.group(3))
+        key = (path, start, end)
+        if key not in ids:
+            chunk = _find_chunk(chunks, path, start, end)
+            if chunk is None:
+                return ""  # citation not backed by a retrieved chunk: drop it
+            lines = chunk["text"].splitlines()
+            off = chunk["start_line"]
+            snippet = "\n".join(lines[start - off : end - off + 1])[:600]
+            ids[key] = len(sources) + 1
             sources.append(
-                {"path": path, "start": key[1], "end": key[2], "snippet": by_range[key]["text"][:300]}
+                {"id": ids[key], "path": path, "start": start, "end": end, "snippet": snippet}
             )
-    return {"answer": text, "sources": sources}
+        return f"[{ids[key]}]"
+
+    return {"answer": CITATION.sub(number_citation, text), "sources": sources}

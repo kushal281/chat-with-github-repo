@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from fastapi.responses import FileResponse
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 
 from app.config import settings
@@ -11,7 +13,10 @@ from app.llm.answer import answer_question
 from app.models import ChatRequest, RepoCreate, RepoStatus
 import logging
 
+
 logger = logging.getLogger("uvicorn.error")
+
+FRONTEND = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
 
 
 @asynccontextmanager
@@ -21,6 +26,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Repo Chat", lifespan=lifespan)
+
+
+@app.get("/")
+def index():
+    return FileResponse(FRONTEND)
 
 
 @app.get("/health")
