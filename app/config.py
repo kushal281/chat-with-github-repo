@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     max_file_kb: int = 200
     max_files: int = 2000
     clone_timeout_s: int = 60
+    db_path: str = "./repos.db"    
 
 
 settings = Settings()
