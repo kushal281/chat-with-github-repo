@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Repo Chat</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 760px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1f2328;
+      }
+
+      h1 {
+        font-size: 1.4rem;
+      }
+
+      .row {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      input {
+        flex: 1;
+        padding: 0.6rem;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+      }
+
+      button {
+        padding: 0.6rem 1rem;
+        border: 0;
+        border-radius: 6px;
+        background: #1f6feb;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+      }
+
+      #status {
+        margin: 0.75rem 0;
+        font-size: 0.9rem;
+        color: #57606a;
+        min-height: 1.2rem;
+      }
+
+      #status.failed {
+        color: #cf222e;
+      }
+
+      #chat {
+        display: none;
+        margin-top: 1rem;
+      }
+
+      #messages {
+        min-height: 160px;
+        margin-bottom: 1rem;
+      }
+
+      .msg {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        line-height: 1.5;
+      }
+
+      .msg p {
+        margin: 0.4rem 0;
+      }
+
+      .msg ul {
+        margin: 0.4rem 0;
+        padding-left: 1.2rem;
+      }
+
+      .msg code {
+        background: #eaeef2;
+        padding: 0.1rem 0.3rem;
+        border-radius: 4px;
+        font-size: 0.85em;
+      }
+
+      .msg pre {
+        background: #fff;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        padding: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        white-space: pre;
+      }
+
+      .cite {
+        display: inline-block;
+        min-width: 1.2rem;
+        text-align: center;
+        background: #ddf4ff;
+        color: #0969da;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        padding: 0 0.35rem;
+        margin: 0 0.1rem;
+        text-decoration: none;
+        vertical-align: super;
+      }
+
+      .sources {
+        margin-top: 0.75rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #d0d7de;
+        font-size: 0.85rem;
+      }
+
+      .sources-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .sources summary {
+        cursor: pointer;
+        padding: 0.2rem 0;
+      }
+
+      .sources summary .cite {
+        vertical-align: baseline;
+        margin-right: 0.4rem;
+      }
+
+      .sources a {
+        color: #0969da;
+        text-decoration: none;
+      }
+
+      .sources a:hover {
+        text-decoration: underline;
+      }
+
+      .user {
+        background: #ddf4ff;
+      }
+
+      .bot {
+        background: #f6f8fa;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Chat with a GitHub Repo</h1>
+
+    <div class="row">
+      <input id="url" placeholder="https://github.com/owner/repo" />
+      <button id="indexBtn">Index</button>
+    </div>
+    <div id="status"></div>
+
+    <div id="chat">
+      <div id="messages"></div>
+      <div class="row">
+        <input id="question" placeholder="Ask about the code..." />
+        <button id="askBtn">Ask</button>
+      </div>
+    </div>
+
+    <script>
+      let repo = null; // {id, url, ...} once ready
+      const $ = (id) => document.getElementById(id);
+
+      function setStatus(text, cls = "") {
+        $("status").textContent = text;
+        $("status").className = cls;
+      }
+
+      async function startIndexing() {
+        const url = $("url").value.trim();
+        if (!url) return;
+        $("indexBtn").disabled = true;
+        $("chat").style.display = "none";
+        setStatus("Starting...");
+        const res = await fetch("/repos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus(data.detail, "failed");
+          $("indexBtn").disabled = false;
+          return;
+        }
+        pollStatus(data.repo_id);
+      }
+
+      async function pollStatus(id) {
+        const r = await (await fetch(`/repos/${id}`)).json();
+        if (r.status === "ready") {
+          repo = r;
+          setStatus(`Ready: ${r.chunk_count} chunks indexed`);
+          $("messages").textContent = "";
+          $("chat").style.display = "block";
+          $("indexBtn").disabled = false;
+        } else if (r.status === "failed") {
+          setStatus(`Failed: ${r.error}`, "failed");
+          $("indexBtn").disabled = false;
+        } else {
+          setStatus(`${r.status}...`);
+          setTimeout(() => pollStatus(id), 1500);
+        }
+      }
+
+      $("indexBtn").onclick = startIndexing;
+      $("url").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") startIndexing();
+      });
+
+      function addMessage(text, cls) {
+        const div = document.createElement("div");
+        div.className = `msg ${cls}`;
+        div.textContent = text;
+        $("messages").appendChild(div);
+        return div;
+      }
+
+      function githubLink(s) {
+        const base = repo.url.replace(/\.git$/, "").replace(/\/$/, "");
+        const safePath = s.path.split("/").map(encodeURIComponent).join("/");
+        return `${base}/blob/HEAD/${safePath}#L${s.start}-L${s.end}`;
+      }
+
+      function escapeHtml(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function renderInline(text, sources) {
+        let h = escapeHtml(text);
+        h = h.replace(/`([^`]+)`/g, "<code>$1</code>");
+        h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        return h.replace(/\[(\d+)\]/g, (m, n) => {
+          const s = sources.find((x) => x.id === Number(n));
+          if (!s) return m;
+          return `<a class="cite" href="${githubLink(s)}" target="_blank" rel="noopener" title="${escapeHtml(s.path)}:${s.start}-${s.end}">${n}</a>`;
+        });
+      }
+
+      function renderAnswer(text, sources) {
+        let html = "",
+          inList = false,
+          inCode = false,
+          code = [];
+        for (const line of text.split("\n")) {
+          if (line.trim().startsWith("```")) {
+            if (inList) {
+              html += "</ul>";
+              inList = false;
+            }
+            if (inCode) {
+              html += `<pre>${escapeHtml(code.join("\n"))}</pre>`;
+              code = [];
+            }
+            inCode = !inCode;
+            continue;
+          }
+          if (inCode) {
+            code.push(line);
+            continue;
+          }
+          const m = line.match(/^\s*[*-]\s+(.*)/);
+          if (m) {
+            if (!inList) {
+              html += "<ul>";
+              inList = true;
+            }
+            html += `<li>${renderInline(m[1], sources)}</li>`;
+          } else {
+            if (inList) {
+              html += "</ul>";
+              inList = false;
+            }
+            if (line.trim()) html += `<p>${renderInline(line, sources)}</p>`;
+          }
+        }
+        if (inList) html += "</ul>";
+        if (inCode) html += `<pre>${escapeHtml(code.join("\n"))}</pre>`;
+        return html;
+      }
+
+      function addSources(msgDiv, sources) {
+        if (!sources.length) return;
+        const box = document.createElement("div");
+        box.className = "sources";
+        const title = document.createElement("div");
+        title.className = "sources-title";
+        title.textContent = "Sources (click a row to see the code)";
+        box.appendChild(title);
+        for (const s of sources) {
+          const details = document.createElement("details");
+          const summary = document.createElement("summary");
+          const badge = document.createElement("span");
+          badge.className = "cite";
+          badge.textContent = s.id;
+          const a = document.createElement("a");
+          a.href = githubLink(s);
+          a.target = "_blank";
+          a.rel = "noopener";
+          a.textContent = `${s.path}:${s.start}-${s.end}`;
+          summary.append(badge, a);
+          const pre = document.createElement("pre");
+          pre.textContent = s.snippet;
+          details.append(summary, pre);
+          box.appendChild(details);
+        }
+        msgDiv.appendChild(box);
+      }
+
+      async function ask() {
+        const q = $("question").value.trim();
+        if (!q || !repo) return;
+        $("question").value = "";
+        $("askBtn").disabled = true;
+        addMessage(q, "user");
+        const reply = addMessage("Thinking...", "bot");
+        try {
+          const res = await fetch(`/repos/${repo.id}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question: q }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail);
+          reply.innerHTML = renderAnswer(data.answer, data.sources);
+          addSources(reply, data.sources);
+        } catch (e) {
+          reply.textContent = `Error: ${e.message}`;
+        }
+        $("askBtn").disabled = false;
+      }
+
+      $("askBtn").onclick = ask;
+      $("question").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") ask();
+      });
+    </script>
+  </body>
+</html>
