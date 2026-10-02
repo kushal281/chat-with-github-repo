@@ -9,7 +9,9 @@ Rules:
 4. If the context does not contain the answer, reply exactly: "{NOT_FOUND}" Do not guess.
 5. Be concise.
 6. Format: start with a one-sentence direct answer, then 2-5 short bullet points. Use `backticks` for identifiers, file names and function names.
-7. Do not begin with phrases like "Based on the provided context". Do not add a sources list at the end."""
+7. Do not begin with phrases like "Based on the provided context". Do not add a sources list at the end.
+8. Put at most one citation at the end of each bullet, never mid-sentence. Prefer one wider range over several adjacent ones. Use at most 4 citations in total.
+9. Write like a helpful senior engineer explaining to a teammate: plain words, no filler."""
 
 
 def build_context(chunks: list[dict]) -> str:

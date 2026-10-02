@@ -149,6 +149,62 @@
       .bot {
         background: #f6f8fa;
       }
+
+      #messages {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .msg {
+        max-width: 88%;
+      }
+      .user {
+        align-self: flex-end;
+        background: #1f6feb;
+        color: #fff;
+        border-radius: 14px 14px 2px 14px;
+      }
+      .bot {
+        align-self: flex-start;
+        background: #f6f8fa;
+        border: 1px solid #d0d7de;
+        border-radius: 14px 14px 14px 2px;
+      }
+      .thinking::after {
+        content: "...";
+        animation: dots 1s steps(4) infinite;
+      }
+      @keyframes dots {
+        0% {
+          content: "";
+        }
+        25% {
+          content: ".";
+        }
+        50% {
+          content: "..";
+        }
+        100% {
+          content: "...";
+        }
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+      .chip {
+        background: #fff;
+        color: #0969da;
+        border: 1px solid #d0d7de;
+        border-radius: 16px;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.8rem;
+      }
+      .sources > summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
     </style>
   </head>
 
@@ -172,7 +228,29 @@
     <script>
       let repo = null; // {id, url, ...} once ready
       const $ = (id) => document.getElementById(id);
+      const STARTERS = [
+        "What does this project do?",
+        "Where is the main entry point?",
+        "How are errors handled?",
+        "How is the code organized?",
+      ];
 
+      function showChips() {
+        const box = document.createElement("div");
+        box.className = "chips";
+        for (const q of STARTERS) {
+          const b = document.createElement("button");
+          b.className = "chip";
+          b.textContent = q;
+          b.onclick = () => {
+            $("question").value = q;
+            box.remove();
+            ask();
+          };
+          box.appendChild(b);
+        }
+        $("messages").appendChild(box);
+      }
       function setStatus(text, cls = "") {
         $("status").textContent = text;
         $("status").className = cls;
@@ -204,6 +282,7 @@
           repo = r;
           setStatus(`Ready: ${r.chunk_count} chunks indexed`);
           $("messages").textContent = "";
+          showChips();
           $("chat").style.display = "block";
           $("indexBtn").disabled = false;
         } else if (r.status === "failed") {
@@ -296,9 +375,11 @@
 
       function addSources(msgDiv, sources) {
         if (!sources.length) return;
-        const box = document.createElement("div");
+        const box = document.createElement("details");
         box.className = "sources";
-        const title = document.createElement("div");
+        const title = document.createElement("summary");
+        title.textContent = `Sources (${sources.length})`;
+        box.appendChild(title);
         title.className = "sources-title";
         title.textContent = "Sources (click a row to see the code)";
         box.appendChild(title);
@@ -328,7 +409,7 @@
         $("question").value = "";
         $("askBtn").disabled = true;
         addMessage(q, "user");
-        const reply = addMessage("Thinking...", "bot");
+        const reply = addMessage("Thinking", "bot thinking");
         try {
           const res = await fetch(`/repos/${repo.id}/chat`, {
             method: "POST",
@@ -339,8 +420,11 @@
           if (!res.ok) throw new Error(data.detail);
           reply.innerHTML = renderAnswer(data.answer, data.sources);
           addSources(reply, data.sources);
+          reply.classList.remove("thinking");
+          reply.scrollIntoView({ behavior: "smooth", block: "nearest" });
         } catch (e) {
           reply.textContent = `Error: ${e.message}`;
+          reply.classList.remove("thinking");
         }
         $("askBtn").disabled = false;
       }
