@@ -4,6 +4,7 @@
 
 Paste a public GitHub repo URL. The app clones and indexes it, then answers questions like *"How does the token bucket work?"* or *"Why do the Lua scripts use Redis TIME?"* with **citations to exact files and line ranges** that link back to GitHub.
 
+**Live demo:** https://repochat.duckdns.org
 
 ![Demo: indexing a repo and asking about its token bucket](docs/demo.gif)
 
@@ -40,15 +41,15 @@ flowchart LR
 
 **Design decisions**
 
-| Decision | Why |
-|---|---|
-| Line-based chunks with ~10 lines of overlap | A function split at a boundary is still retrievable with its context |
-| File path prepended to the text before embedding | Names and paths carry signal that the code body alone lacks |
-| Hybrid retrieval, fused with Reciprocal Rank Fusion | Identifiers favor keyword search, concepts favor embeddings; RRF needs no score normalization |
-| Per-file cap in the merged results | Docs and tests repeat identifiers and otherwise crowd real code out of the top-k |
-| Citations parsed and checked against retrieved lines | The model can only cite code it was actually shown |
-| Short follow-ups borrow the previous question for retrieval | "Explain that in more detail" has no searchable topic on its own |
-| LLM behind a small provider-agnostic interface | The provider can be swapped without touching retrieval |
+| Decision                                                    | Why                                                                                           |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Line-based chunks with ~10 lines of overlap                 | A function split at a boundary is still retrievable with its context                          |
+| File path prepended to the text before embedding            | Names and paths carry signal that the code body alone lacks                                   |
+| Hybrid retrieval, fused with Reciprocal Rank Fusion         | Identifiers favor keyword search, concepts favor embeddings; RRF needs no score normalization |
+| Per-file cap in the merged results                          | Docs and tests repeat identifiers and otherwise crowd real code out of the top-k              |
+| Citations parsed and checked against retrieved lines        | The model can only cite code it was actually shown                                            |
+| Short follow-ups borrow the previous question for retrieval | "Explain that in more detail" has no searchable topic on its own                              |
+| LLM behind a small provider-agnostic interface              | The provider can be swapped without touching retrieval                                        |
 
 ## Evaluation
 
@@ -56,12 +57,12 @@ flowchart LR
 
 **Retrieval (34 answerable questions)**
 
-| Retrieval mode | hit@1 | hit@3 | hit@5 |
-|---|---|---|---|
-| Vector only (baseline) | **32%** | **74%** | 88% |
-| Hybrid, plain RRF | 21% | 59% | 82% |
-| Hybrid + per-file cap (2) | 21% | 65% | 88% |
-| **Hybrid, weighted RRF (vector 2:1) + cap (2)**, used in the app | 29% | 71% | **91%** |
+| Retrieval mode                                                         | hit@1         | hit@3         | hit@5         |
+| ---------------------------------------------------------------------- | ------------- | ------------- | ------------- |
+| Vector only (baseline)                                                 | **32%** | **74%** | 88%           |
+| Hybrid, plain RRF                                                      | 21%           | 59%           | 82%           |
+| Hybrid + per-file cap (2)                                              | 21%           | 65%           | 88%           |
+| **Hybrid, weighted RRF (vector 2:1) + cap (2)**, used in the app | 29%           | 71%           | **91%** |
 
 By question type at hit@5: easy 91% for both vector and the shipped mode; multi-file 83% → 92%.
 
@@ -82,13 +83,13 @@ python -m eval.run_checks <repo_id>             # refusal + citation checks
 
 ## API
 
-| Method | Route | Purpose |
-|---|---|---|
-| POST | `/repos` | `{url}` starts ingestion, returns `repo_id` (an already-indexed URL returns its existing id) |
-| GET | `/repos/{id}` | Status (`cloning`, `indexing`, `ready`, `failed`) and chunk count |
-| POST | `/repos/{id}/chat` | `{question, history}` returns `{answer, sources:[{id, path, start, end, snippet}]}` |
-| DELETE | `/repos/{id}` | Remove the index and its metadata |
-| GET | `/health` | Liveness and whether an LLM key is configured |
+| Method | Route                | Purpose                                                                                          |
+| ------ | -------------------- | ------------------------------------------------------------------------------------------------ |
+| POST   | `/repos`           | `{url}` starts ingestion, returns `repo_id` (an already-indexed URL returns its existing id) |
+| GET    | `/repos/{id}`      | Status (`cloning`, `indexing`, `ready`, `failed`) and chunk count                        |
+| POST   | `/repos/{id}/chat` | `{question, history}` returns `{answer, sources:[{id, path, start, end, snippet}]}`          |
+| DELETE | `/repos/{id}`      | Remove the index and its metadata                                                                |
+| GET    | `/health`          | Liveness and whether an LLM key is configured                                                    |
 
 ## Run it
 
