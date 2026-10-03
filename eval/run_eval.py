@@ -20,6 +20,7 @@ MODES = {
     "vector": {"mode": "vector"},
     "hybrid": {"mode": "hybrid"},
     "hybrid_cap": {"mode": "hybrid", "max_per_file": 2},
+    "hybrid_w2": {"mode": "hybrid", "max_per_file": 2, "vec_weight": 2.0},    
 }
 
 

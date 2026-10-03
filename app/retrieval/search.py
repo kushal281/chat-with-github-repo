@@ -5,15 +5,15 @@ RRF_K = 60
 POOL = 20  # candidates taken from each retriever before merging
 
 
-def rrf_merge(rankings: list[list[dict]]) -> list[dict]:
-    """Reciprocal Rank Fusion: score = sum(1 / (60 + rank)) across rankings."""
+def rrf_merge(rankings: list[list[dict]], weights: list[float] | None = None) -> list[dict]:
+    weights = weights or [1.0] * len(rankings)
     scores: dict[tuple, float] = {}
     chunks: dict[tuple, dict] = {}
-    for ranking in rankings:
+    for w, ranking in zip(weights, rankings):
         for rank, c in enumerate(ranking):
             key = (c["path"], c["start_line"])
             chunks[key] = c
-            scores[key] = scores.get(key, 0.0) + 1 / (RRF_K + rank + 1)
+            scores[key] = scores.get(key, 0.0) + w / (RRF_K + rank + 1)
     return [chunks[key] for key in sorted(scores, key=scores.get, reverse=True)]
 
 
@@ -27,18 +27,12 @@ def cap_per_file(chunks: list[dict], max_per_file: int) -> list[dict]:
     return out
 
 
-def search(
-    repo_id: str,
-    question: str,
-    k: int = 5,
-    mode: str = "hybrid",
-    max_per_file: int | None = None,
-) -> list[dict]:
+def search(repo_id: str, question: str, k: int = 5, mode: str = "hybrid", max_per_file: int | None = None, vec_weight: float = 1.0) -> list[dict]:
     vec = query(repo_id, question, POOL)
     if mode == "vector":
         merged = vec
     else:
-        merged = rrf_merge([vec, bm25_query(repo_id, question, POOL)])
+        merged = rrf_merge([vec, bm25_query(repo_id, question, POOL)], [vec_weight, 1.0])
     if max_per_file:
         merged = cap_per_file(merged, max_per_file)
     return merged[:k]
