@@ -37,3 +37,7 @@ def bm25_query(repo_id: str, question: str, k: int = 20) -> list[dict]:
     scores = bm25.get_scores(tokenize(question))
     top = sorted(range(len(chunks)), key=lambda i: scores[i], reverse=True)[:k]
     return [chunks[i] for i in top if scores[i] > 0]
+
+
+def invalidate(repo_id: str) -> None:
+    _indexes.pop(repo_id, None)

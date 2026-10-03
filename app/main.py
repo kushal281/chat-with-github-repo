@@ -11,7 +11,7 @@ from app.ingest.pipeline import run_ingestion
 from app.models import RepoCreate, RepoStatus
 from app.llm.answer import answer_question
 from app.models import ChatRequest, RepoCreate, RepoStatus
-from app.retrieval.store import delete_repo
+from app.cleanup import ensure_columns, find_existing, purge, remove_repo_fully, touch
 import logging
 
 
@@ -23,6 +23,8 @@ FRONTEND = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    ensure_columns()
+    purge()
     yield
 
 
@@ -45,7 +47,13 @@ def add_repo(body: RepoCreate, background: BackgroundTasks):
         parse_repo_url(body.url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    existing = find_existing(body.url)
+    if existing:
+        touch(existing)
+        return {"repo_id": existing}
+    purge()
     repo_id = create_repo(body.url)
+    touch(repo_id)
     background.add_task(run_ingestion, repo_id, body.url)
     return {"repo_id": repo_id}
 
@@ -65,6 +73,7 @@ def chat(repo_id: str, body: ChatRequest):
         raise HTTPException(status_code=404, detail="Repo not found")
     if repo["status"] != "ready":
         raise HTTPException(status_code=409, detail=f"Repo is {repo['status']}")
+    touch(repo, id)
     try:
         return answer_question(repo_id, body.question)
     except Exception:
@@ -74,5 +83,7 @@ def chat(repo_id: str, body: ChatRequest):
 
 @app.delete("/repos/{repo_id}")
 def remove_repo(repo_id: str):
-    delete_repo(repo_id)
+    if not get_repo(repo_id):
+        raise HTTPException(status_code=404, detail="Repo not found")
+    remove_repo_fully(repo_id)
     return {"deleted": repo_id}
