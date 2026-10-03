@@ -2,7 +2,7 @@ import re
 
 from app.llm.client import get_llm
 from app.llm.prompts import SYSTEM_PROMPT, build_user_prompt
-from app.retrieval.store import query
+from app.retrieval.search import search
 
 CITATION = re.compile(r"\[([^\[\]]+?):(\d+)(?:-(\d+))?\]")
 MERGE_GAP = 3
@@ -23,7 +23,7 @@ def _parse(m: re.Match) -> tuple[str, int, int]:
 
 
 def answer_question(repo_id: str, question: str, k: int = 5) -> dict:
-    chunks = query(repo_id, question, k)
+    chunks = search(repo_id, question, k, mode="hybrid", max_per_file=2, vec_weight=2.0)
     text = get_llm().complete(SYSTEM_PROMPT, build_user_prompt(question, chunks))
     maps = _line_maps(chunks)
 
@@ -62,4 +62,5 @@ def answer_question(repo_id: str, question: str, k: int = 5) -> dict:
 
     out = CITATION.sub(rewrite, text)
     out = re.sub(r"(\[(\d+)\])(?:\s*\[\2\])+", r"\1", out)  # [1] [1] -> [1]
+    out = re.sub(r"\s+([.,;:])", r"\1", out)  # "algorithms ." -> "algorithms."    
     return {"answer": out, "sources": sources}
