@@ -894,6 +894,14 @@
       .modal-foot a:hover {
         text-decoration: underline;
       }
+      body.ready .modal { left: 300px; }
+@media (max-width: 760px) {
+  body.ready .modal { left: 0; }
+}
+
+body.ready #messages { padding-bottom: 2rem; scroll-padding-bottom: 2rem; }
+
+.msg { scroll-margin-top: 1rem; }
     </style>
   </head>
 
@@ -1306,7 +1314,7 @@
         }
         $("question").value = "";
         $("askBtn").disabled = true;
-        addMessage(q, "user");
+        const userMsg = addMessage(q, "user");
         const reply = addMessage("", "bot");
         reply.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
         try {
@@ -1318,13 +1326,14 @@
           const data = await res.json();
           if (!res.ok) throw new Error(data.detail);
           reply.innerHTML = renderAnswer(data.answer, data.sources);
+          $("messages").scrollTop = $("messages").scrollHeight;
           history.push(
             { role: "user", content: q },
             { role: "assistant", content: data.answer.slice(0, 3000) },
           );
           addSources(reply, data.sources);
           reply.classList.remove("thinking");
-          reply.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          userMsg.scrollIntoView({ behavior: "smooth", block: "start" });
         } catch (e) {
           reply.textContent = `Error: ${e.message}`;
           reply.classList.remove("thinking");
