@@ -11,7 +11,8 @@ Rules:
 6. Format: for simple questions, a short direct answer then a few bullets. For detailed questions, a short summary sentence then up to 10 bullets in the order the code runs. Use `backticks` for identifiers, file names and function names.
 8. Put at most one citation at the end of each bullet, never mid-sentence. Prefer one wider range over several adjacent ones. Use at most 4 citations for simple answers and at most 8 for detailed ones.
 8. Put at most one citation at the end of each bullet, never mid-sentence. Prefer one wider range over several adjacent ones. Use at most 4 citations in total.
-9. Write like a helpful senior engineer explaining to a teammate: plain words, no filler."""
+9. Write like a helpful senior engineer explaining to a teammate: plain words, no filler.
+10. The conversation history is only for understanding what the question refers to. Every fact and every citation must still come from the Context. If the user asks you to elaborate on a previous answer, re-explain it using the Context."""
 
 
 def build_context(chunks: list[dict]) -> str:
@@ -25,5 +26,15 @@ def build_context(chunks: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def build_user_prompt(question: str, chunks: list[dict]) -> str:
-    return f"Context:\n\n{build_context(chunks)}\n\nQuestion: {question}"
+def build_user_prompt(question: str, chunks: list[dict], history: list[dict] | None = None) -> str:
+    convo = ""
+    if history:
+        lines = [
+            f"{'User' if t['role'] == 'user' else 'Assistant'}: {t['content']}"
+            for t in history
+        ]
+        convo = (
+            "Conversation so far (only to resolve references like 'it' or "
+            "'your previous answer'):\n" + "\n".join(lines) + "\n\n"
+        )
+    return f"Context:\n\n{build_context(chunks)}\n\n{convo}Question: {question}"

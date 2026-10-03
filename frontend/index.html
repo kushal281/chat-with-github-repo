@@ -227,6 +227,7 @@
 
     <script>
       let repo = null; // {id, url, ...} once ready
+      let history = []; // last turns sent with each question
       const $ = (id) => document.getElementById(id);
       const STARTERS = [
         "What does this project do?",
@@ -280,6 +281,7 @@
         const r = await (await fetch(`/repos/${id}`)).json();
         if (r.status === "ready") {
           repo = r;
+          history = [];
           setStatus(`Ready: ${r.chunk_count} chunks indexed`);
           $("messages").textContent = "";
           showChips();
@@ -414,11 +416,15 @@
           const res = await fetch(`/repos/${repo.id}/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question: q }),
+            body: JSON.stringify({ question: q, history: history.slice(-6) }),
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.detail);
           reply.innerHTML = renderAnswer(data.answer, data.sources);
+          history.push(
+            { role: "user", content: q },
+            { role: "assistant", content: data.answer.slice(0, 3000) },
+          );
           addSources(reply, data.sources);
           reply.classList.remove("thinking");
           reply.scrollIntoView({ behavior: "smooth", block: "nearest" });

@@ -73,9 +73,11 @@ def chat(repo_id: str, body: ChatRequest):
         raise HTTPException(status_code=404, detail="Repo not found")
     if repo["status"] != "ready":
         raise HTTPException(status_code=409, detail=f"Repo is {repo['status']}")
-    touch(repo, id)
+    touch(repo_id)
     try:
-        return answer_question(repo_id, body.question)
+        return answer_question(
+            repo_id, body.question, [t.model_dump() for t in body.history]
+        )
     except Exception:
         logger.exception("LLM request failed")
         raise HTTPException(status_code=502, detail="LLM request failed")

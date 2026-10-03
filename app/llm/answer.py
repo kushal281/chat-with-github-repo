@@ -8,6 +8,29 @@ CITATION = re.compile(r"\[([^\[\]]+?):(\d+)(?:-(\d+))?\]")
 MERGE_GAP = 3
 
 
+DETAIL = re.compile(
+    r"\b(detail\w*|elaborat\w*|explain\w*|walk me through|step by step|in depth|how does|how do)\b",
+    re.I,
+)
+SHORT_FOLLOWUP_WORDS = 8
+
+
+def _search_query(question: str, history: list[dict] | None) -> str:
+    # a short follow-up has no topic of its own, so borrow the previous question
+    if history and len(question.split()) <= SHORT_FOLLOWUP_WORDS:
+        last_user = next((t["content"] for t in reversed(history) if t["role"] == "user"), "")
+        return f"{last_user} {question}"
+    return question
+
+
+def _clean_history(history: list[dict] | None) -> list[dict]:
+    # drop [1]-style markers so the model doesn't copy numbers that mean nothing now
+    return [
+        {"role": t["role"], "content": re.sub(r"\s*\[\d+\]", "", t["content"])}
+        for t in (history or [])
+    ]
+
+
 def _line_maps(chunks: list[dict]) -> dict[str, dict[int, str]]:
     maps: dict[str, dict[int, str]] = {}
     for c in chunks:
@@ -22,9 +45,19 @@ def _parse(m: re.Match) -> tuple[str, int, int]:
     return m.group(1), start, int(m.group(3) or start)
 
 
-def answer_question(repo_id: str, question: str, k: int = 5) -> dict:
-    chunks = search(repo_id, question, k, mode="hybrid", max_per_file=2, vec_weight=2.0)
-    text = get_llm().complete(SYSTEM_PROMPT, build_user_prompt(question, chunks))
+def answer_question(repo_id: str, question: str, history: list[dict] | None = None) -> dict:
+    detailed = bool(DETAIL.search(question))
+    chunks = search(
+        repo_id,
+        _search_query(question, history),
+        8 if detailed else 5,
+        mode="hybrid",
+        max_per_file=3 if detailed else 2,
+        vec_weight=2.0,
+    )
+    text = get_llm().complete(
+        SYSTEM_PROMPT, build_user_prompt(question, chunks, _clean_history(history))
+    )
     maps = _line_maps(chunks)
 
     # 1. keep only citations whose every line was actually retrieved
