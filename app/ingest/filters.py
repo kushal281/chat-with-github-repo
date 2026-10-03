@@ -5,7 +5,7 @@ from app.config import settings
 
 ALLOWED_EXT = {
     ".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".go", ".rs", ".c", ".cpp",
-    ".h", ".sh", ".md", ".json", ".yaml", ".yml", ".toml",
+    ".h", ".sh", ".md", ".json", ".yaml", ".yml", ".toml", ".lua",
 }
 IGNORED_DIRS = {
     ".git", "node_modules", "dist", "build", "venv", ".venv",
