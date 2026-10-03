@@ -894,14 +894,23 @@
       .modal-foot a:hover {
         text-decoration: underline;
       }
-      body.ready .modal { left: 300px; }
-@media (max-width: 760px) {
-  body.ready .modal { left: 0; }
-}
+      body.ready .modal {
+        left: 300px;
+      }
+      @media (max-width: 760px) {
+        body.ready .modal {
+          left: 0;
+        }
+      }
 
-body.ready #messages { padding-bottom: 2rem; scroll-padding-bottom: 2rem; }
+      body.ready #messages {
+        padding-bottom: 2rem;
+        scroll-padding-bottom: 2rem;
+      }
 
-.msg { scroll-margin-top: 1rem; }
+      .msg {
+        scroll-margin-top: 1rem;
+      }
     </style>
   </head>
 
