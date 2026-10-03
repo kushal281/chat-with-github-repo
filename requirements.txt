@@ -5,3 +5,4 @@ chromadb
 sentence-transformers
 pytest
 google-genai
+rank_bm25
