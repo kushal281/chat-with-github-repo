@@ -4,3 +4,4 @@ __pycache__/
 chroma_data/
 scratch.py
 repos.db
+.pytest_cache/
