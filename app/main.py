@@ -11,6 +11,7 @@ from app.ingest.pipeline import run_ingestion
 from app.models import RepoCreate, RepoStatus
 from app.llm.answer import answer_question
 from app.models import ChatRequest, RepoCreate, RepoStatus
+from app.retrieval.store import delete_repo
 import logging
 
 
@@ -69,3 +70,9 @@ def chat(repo_id: str, body: ChatRequest):
     except Exception:
         logger.exception("LLM request failed")
         raise HTTPException(status_code=502, detail="LLM request failed")
+
+
+@app.delete("/repos/{repo_id}")
+def remove_repo(repo_id: str):
+    delete_repo(repo_id)
+    return {"deleted": repo_id}
