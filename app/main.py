@@ -2,7 +2,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi.responses import FileResponse
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
+from google.genai.errors import ClientError, ServerError
+
+from app.ratelimit import chat_limit, index_limit
 
 from app.config import settings
 from app.db import create_repo, get_repo, init_db
@@ -41,7 +44,7 @@ def health():
     return {"status": "ok", "llm_configured": bool(settings.llm_api_key)}
 
 
-@app.post("/repos", status_code=202)
+@app.post("/repos", status_code=202, dependencies=[Depends(index_limit)])
 def add_repo(body: RepoCreate, background: BackgroundTasks):
     try:
         parse_repo_url(body.url)
@@ -66,7 +69,7 @@ def repo_status(repo_id: str):
     return repo
 
 
-@app.post("/repos/{repo_id}/chat")
+@app.post("/repos/{repo_id}/chat", dependencies=[Depends(chat_limit)])
 def chat(repo_id: str, body: ChatRequest):
     repo = get_repo(repo_id)
     if not repo:
@@ -77,6 +80,18 @@ def chat(repo_id: str, body: ChatRequest):
     try:
         return answer_question(
             repo_id, body.question, [t.model_dump() for t in body.history]
+        )
+    except ClientError as e:
+        if e.code == 429:
+            raise HTTPException(
+                status_code=429,
+                detail="The demo's daily AI quota is used up. Please try again tomorrow.",
+            )
+        logger.exception("LLM client error")
+        raise HTTPException(status_code=502, detail="LLM request failed")
+    except ServerError:
+        raise HTTPException(
+            status_code=503, detail="The AI model is busy. Please try again in a moment."
         )
     except Exception:
         logger.exception("LLM request failed")
