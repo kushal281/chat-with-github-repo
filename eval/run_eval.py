@@ -4,6 +4,9 @@ from collections import defaultdict
 from pathlib import Path
 
 from app.retrieval.store import _collection, query
+from app.retrieval.search import search
+from app.retrieval.store import _collection
+
 
 K = 5
 QUESTIONS = Path(__file__).parent / "questions.json"
@@ -13,8 +16,15 @@ def norm(path: str) -> str:
     return path.replace("\\", "/")
 
 
-def retrieve(repo_id: str, question: str, k: int) -> list[dict]:
-    return query(repo_id, question, k)
+MODES = {
+    "vector": {"mode": "vector"},
+    "hybrid": {"mode": "hybrid"},
+    "hybrid_cap": {"mode": "hybrid", "max_per_file": 2},
+}
+
+
+def retrieve(repo_id: str, question: str, k: int, mode: str) -> list[dict]:
+    return search(repo_id, question, k, **MODES[mode])
 
 
 def is_hit(chunks: list[dict], expected: set[str]) -> bool:
@@ -26,7 +36,7 @@ def indexed_paths(repo_id: str) -> set[str]:
     return {norm(m["path"]) for m in res["metadatas"]}
 
 
-def main(repo_id: str) -> None:
+def main(repo_id: str, mode: str) -> None:
     items = json.loads(QUESTIONS.read_text(encoding="utf-8"))
     scored = [i for i in items if i["expected"]]  # skip unanswerable ones
 
@@ -39,7 +49,7 @@ def main(repo_id: str) -> None:
     by_kind = defaultdict(lambda: [0, 0])  # kind -> [hits@K, total]
     for item in scored:
         expected = {norm(e) for e in item["expected"]}
-        chunks = retrieve(repo_id, item["q"], K)
+        chunks = retrieve(repo_id, item["q"], K, mode)
         for k in hits:
             hits[k] += is_hit(chunks[:k], expected)
         ok = is_hit(chunks, expected)
@@ -58,4 +68,4 @@ def main(repo_id: str) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "vector")
