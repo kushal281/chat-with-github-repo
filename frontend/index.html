@@ -1087,18 +1087,176 @@
           transition-duration: 0.01ms !important;
         }
       }
+
+      .gh-icon {
+        width: 36px;
+        height: 36px;
+        color: var(--text);
+      }
+      .brand-break {
+        display: inline;
+      }
+      .tagline {
+        margin: 0;
+        color: var(--muted);
+        text-align: center;
+      }
+      .features {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      body.ready .gh-icon,
+      body.ready .tagline,
+      body.ready .features {
+        display: none;
+      }
+
+      body.landing {
+        padding-bottom: 8vh;
+      } /* sits slightly above true center */
+      body.landing aside {
+        max-width: 440px;
+        gap: 0;
+        align-items: center;
+      }
+      body.landing .gh-icon {
+        margin-bottom: 1rem;
+      }
+      body.landing .brand {
+        font-size: clamp(1.6rem, 6vw, 2.5rem);
+        line-height: 1.15;
+        white-space: normal;
+        text-align: center;
+      }
+      body.landing .brand-break {
+        display: block;
+      }
+      body.landing .tagline {
+        margin: 0.75rem 0 1.75rem;
+        font-size: 1rem;
+      }
+
+      body.landing #uploadCard {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        background: none;
+        border: 0;
+        box-shadow: none;
+      }
+      body.landing .row {
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      body.landing #url {
+        flex: none;
+        padding: 0.8rem 1rem 0.8rem 2.7rem;
+        font-size: 1rem;
+        background-repeat: no-repeat;
+        background-position: 0.95rem center;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E");
+      }
+      body.landing #indexBtn {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        font-size: 1rem;
+      }
+
+      body.landing .features {
+        margin-top: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.35rem 1.1rem;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .features li::before {
+        content: "\2726";
+        color: var(--accent);
+        margin-right: 0.4rem;
+        font-size: 0.7rem;
+      }
+
+      #messages {
+        overflow-anchor: none;
+      }
+
+      @media (min-width: 761px) {
+        body.landing aside {
+          max-width: 720px;
+        }
+        body.landing .brand {
+          white-space: nowrap;
+          font-size: clamp(2rem, 4vw, 2.5rem);
+        }
+        body.landing .brand-break {
+          display: inline;
+        }
+        body.landing .tagline {
+          white-space: nowrap;
+        }
+        body.landing .row {
+          flex-direction: row;
+        }
+        body.landing #url {
+          flex: 1;
+        }
+        body.landing #indexBtn {
+          width: auto;
+          padding: 0.8rem 1.8rem;
+        }
+      }
+
+      @media (max-width: 760px) {
+        body.landing {
+          align-items: flex-start;
+          padding: 12vh 1.25rem 2rem;
+        }
+        body.landing .gh-icon {
+          width: 44px;
+          height: 44px;
+          margin-bottom: 1.25rem;
+        }
+        body.landing .brand {
+          font-size: 2.1rem;
+        }
+        body.landing .tagline {
+          margin: 1rem 0 2.25rem;
+          font-size: 1.05rem;
+        }
+        body.landing #url {
+          padding: 1rem 1rem 1rem 2.8rem;
+        }
+        body.landing #indexBtn {
+          padding: 0.95rem 1rem;
+        }
+        body.landing .features {
+          margin-top: 2rem;
+          font-size: 0.85rem;
+        }
+      }
     </style>
   </head>
 
   <body class="landing">
     <aside>
-      <div class="brand">Chat with a GitHub Repo</div>
+      <svg class="gh-icon" viewBox="0 0 16 16" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+        />
+      </svg>
+      <div class="brand">
+        Chat with a GitHub <span class="brand-break">Repo</span>
+      </div>
+      <p class="tagline">
+        Ask questions about any public GitHub repository with citations.
+      </p>
 
       <div id="uploadCard" class="card">
-        <div class="intro">
-          <h2>Paste a public GitHub repo</h2>
-          <p>Then ask questions. Answers cite exact files and lines.</p>
-        </div>
         <div class="row">
           <input id="url" placeholder="https://github.com/owner/repo" />
           <button id="indexBtn">Index</button>
@@ -1110,6 +1268,12 @@
         </ol>
         <div id="status"></div>
       </div>
+
+      <ul class="features">
+        <li>Source citations</li>
+        <li>Exact file references</li>
+        <li>Repository-aware answers</li>
+      </ul>
 
       <div id="repoInfo" class="card">
         <div class="info-label">Indexed repo</div>
@@ -1331,7 +1495,6 @@
         div.className = `msg ${cls}`;
         div.textContent = text;
         $("messages").appendChild(div);
-        $("messages").scrollTop = $("messages").scrollHeight;
         return div;
       }
 
@@ -1524,23 +1687,55 @@
         openSource(s);
       });
 
+      const smooth = () =>
+        matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth";
+
+      function fitSpacer(userMsg) {
+        const box = $("messages");
+        let sp = $("spacer");
+        if (!sp) {
+          sp = document.createElement("div");
+          sp.id = "spacer";
+          sp.style.flex = "none";
+        }
+        sp.style.height = "0px";
+        box.appendChild(sp); // always last
+        const offset =
+          parseFloat(getComputedStyle(userMsg).scrollMarginTop) || 0;
+        const top =
+          userMsg.getBoundingClientRect().top -
+          box.getBoundingClientRect().top +
+          box.scrollTop -
+          offset;
+        sp.style.height =
+          Math.max(0, top + box.clientHeight - box.scrollHeight) + "px";
+        return top;
+      }
+
       async function ask() {
         const q = $("question").value.trim();
-        if (!q || !repo) return;
+        if (!q || !repo || $("askBtn").disabled) return;
+        $("question").value = "";
+        $("askBtn").disabled = true;
+
+        // first question: wait until the composer has finished moving down
         if ($("chat").classList.contains("empty")) {
           const go = () => {
             $("chat").classList.remove("empty");
             $("chips").textContent = "";
           };
-          document.startViewTransition
-            ? document.startViewTransition(go)
-            : go();
+          if (document.startViewTransition)
+            await document.startViewTransition(go).finished;
+          else go();
         }
-        $("question").value = "";
-        $("askBtn").disabled = true;
+
         const userMsg = addMessage(q, "user");
         const reply = addMessage("", "bot");
         reply.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+        $("messages").scrollTo({ top: fitSpacer(userMsg), behavior: smooth() });
+
         try {
           const res = await fetch(`/repos/${repo.id}/chat`, {
             method: "POST",
@@ -1550,18 +1745,16 @@
           const data = await res.json();
           if (!res.ok) throw new Error(data.detail);
           reply.innerHTML = renderAnswer(data.answer, data.sources);
-          $("messages").scrollTop = $("messages").scrollHeight;
           history.push(
             { role: "user", content: q },
             { role: "assistant", content: data.answer.slice(0, 3000) },
           );
           addSources(reply, data.sources);
-          reply.classList.remove("thinking");
-          userMsg.scrollIntoView({ behavior: "smooth", block: "start" });
         } catch (e) {
           reply.textContent = `Error: ${e.message}`;
-          reply.classList.remove("thinking");
         }
+        reply.classList.remove("thinking");
+        fitSpacer(userMsg); // spacer shrinks as the answer grows; no extra scrolling
         $("askBtn").disabled = false;
       }
 
