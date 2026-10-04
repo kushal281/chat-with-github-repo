@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cstyle%3Epath%7Bfill:%231f2328%7D@media(prefers-color-scheme:dark)%7Bpath%7Bfill:%23e6edf3%7D%7D%3C/style%3E%3Cpath d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z'/%3E%3C/svg%3E"
+    />
     <title>Repo Chat</title>
     <style>
       :root {
@@ -1236,6 +1240,73 @@
         body.landing .features {
           margin-top: 2rem;
           font-size: 0.85rem;
+        }
+      }
+
+      @media (min-width: 761px) {
+        body.landing {
+          padding-bottom: 6vh;
+        }
+        body.landing aside {
+          max-width: clamp(720px, 60vw, 900px);
+        }
+        body.landing .gh-icon {
+          width: clamp(40px, 6vh, 64px);
+          height: clamp(40px, 6vh, 64px);
+          margin-bottom: clamp(1rem, 2.5vh, 1.75rem);
+        }
+        body.landing .brand {
+          font-size: clamp(2.2rem, calc(2.2vw + 3.2vh), 3.6rem);
+        }
+        body.landing .tagline {
+          font-size: clamp(1.05rem, calc(0.5vw + 1.2vh), 1.3rem);
+          margin: 0.9rem 0 clamp(1.75rem, 4.5vh, 3rem);
+        }
+        body.landing #url {
+          padding-block: clamp(0.85rem, 1.8vh, 1.2rem);
+          font-size: 1.1rem;
+        }
+        body.landing #indexBtn {
+          padding-block: clamp(0.85rem, 1.8vh, 1.2rem);
+          font-size: 1.1rem;
+        }
+        body.landing .features {
+          margin-top: clamp(1.5rem, 4.5vh, 2.75rem);
+          font-size: 0.9rem;
+        }
+      }
+
+      @media (max-width: 760px) {
+        body.landing {
+          align-items: center;
+          padding: 1.25rem 1.25rem 4vh;
+        }
+        body.landing .gh-icon {
+          width: clamp(44px, 7vh, 60px);
+          height: clamp(44px, 7vh, 60px);
+          margin-bottom: clamp(1rem, 2.5vh, 1.5rem);
+        }
+        body.landing .brand {
+          font-size: clamp(2.1rem, 8.5vw, 2.7rem);
+        }
+        body.landing .tagline {
+          font-size: 1.1rem;
+          margin: 1.1rem 0 clamp(2rem, 5vh, 3rem);
+        }
+        body.landing .row {
+          gap: 0.75rem;
+        }
+        body.landing #url {
+          padding: 1.1rem 1rem 1.1rem 2.9rem;
+          font-size: 1.05rem;
+        }
+        body.landing #indexBtn {
+          padding: 1.05rem 1rem;
+          font-size: 1.05rem;
+        }
+        body.landing .features {
+          margin-top: clamp(2rem, 5vh, 3rem);
+          font-size: 0.88rem;
         }
       }
     </style>
