@@ -864,11 +864,13 @@
         scrollbar-width: thin;
         scrollbar-color: var(--border) transparent;
       }
+      .code-inner {
+        width: max-content;
+        min-width: 100%;
+      }
       .code-line {
         display: flex;
         white-space: pre;
-        width: max-content;
-        min-width: 100%;
         padding-right: 1.5rem;
       }
       .code-line .num {
@@ -923,6 +925,158 @@
       .ghost:hover:not(:disabled) {
         background: var(--accent-soft);
       }
+
+      @media (max-width: 760px) {
+        input {
+          font-size: 16px;
+        } /* stops iOS from zooming on focus */
+
+        /* landing page */
+        body.landing {
+          padding: 1rem;
+        }
+        body.landing aside {
+          gap: 1.5rem;
+        }
+        body.landing .brand {
+          font-size: 1.9rem;
+        }
+        body.landing #uploadCard {
+          padding: 1.1rem;
+        }
+        body.landing .row {
+          flex-direction: column;
+        }
+        body.landing .row button {
+          width: 100%;
+        }
+
+        /* chat area */
+        body.ready #messages {
+          padding: 1rem 0.9rem 2rem;
+        }
+        .composer {
+          padding: 0 0.6rem 0.6rem;
+        }
+        .composer .row {
+          padding: 0.5rem;
+          border-radius: 16px;
+        }
+        main.empty .chip {
+          font-size: 0.8rem;
+          padding: 0.4rem 0.8rem;
+        }
+
+        /* source modal */
+        .modal {
+          padding: 0.5rem;
+        }
+        .modal-card {
+          max-height: 90dvh;
+        }
+        .modal-body {
+          font-size: 0.75rem;
+        }
+      }
+
+      .topbar,
+      #backdrop {
+        display: none;
+      }
+
+      @media (max-width: 760px) {
+        body.ready {
+          grid-template-columns: minmax(0, 1fr) !important;
+          grid-template-rows: minmax(0, 1fr);
+        }
+
+        body.ready aside {
+          position: fixed;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          z-index: 40;
+          width: min(320px, 85vw);
+          max-height: none;
+          padding: 1.25rem;
+          gap: 1rem;
+          border-right: 1px solid var(--border);
+          border-bottom: 0;
+          overflow-y: auto;
+          transform: translateX(-100%);
+          transition: transform 0.25s ease;
+        }
+        body.ready.drawer-open aside {
+          transform: none;
+          box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+        }
+        body.ready #uploadCard .row {
+          flex-direction: column;
+        }
+
+        body.ready #backdrop {
+          display: block;
+          position: fixed;
+          inset: 0;
+          z-index: 30;
+          background: rgba(0, 0, 0, 0.5);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.25s;
+        }
+        body.ready.drawer-open #backdrop {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        body.ready .topbar {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 20;
+          height: 3rem;
+          padding: 0 0.6rem;
+          background: var(--bg);
+          border-bottom: 1px solid var(--border);
+        }
+        body.ready #topName {
+          min-width: 0;
+          font-weight: 600;
+          font-size: 0.9rem;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        body.ready #messages {
+          padding-top: 4rem;
+        }
+      }
+
+      main.empty .composer {
+        position: relative;
+        padding-bottom: 0;
+      }
+      main.empty #chips {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin: 1rem auto 0;
+        padding: 0 1rem;
+      }
+
+      @media (max-width: 760px) {
+        .msg {
+          scroll-margin-top: 4rem;
+        }
+        body.ready main.empty {
+          padding-top: 3rem;
+        } /* centers within the area below the bar */
+      }
     </style>
   </head>
 
@@ -965,6 +1119,14 @@
         <div id="chips" class="chips"></div>
       </div>
     </main>
+
+    <div class="topbar">
+      <button id="menuBtn" class="icon-btn" aria-label="Open menu">
+        &#9776;
+      </button>
+      <span id="topName"></span>
+    </div>
+    <div id="backdrop"></div>
 
     <div id="srcModal" class="modal" hidden>
       <div
@@ -1014,9 +1176,19 @@
         $("repoName").textContent = name;
         $("repoName").href = r.url;
         $("repoMeta").textContent = `${r.chunk_count} chunks indexed`;
+        $("topName").textContent = name;
       }
       const STEPS = ["cloning", "indexing", "ready"];
       let lastStage = "cloning";
+
+      function setDrawer(open) {
+        document.body.classList.toggle("drawer-open", open);
+      }
+      $("menuBtn").onclick = () => setDrawer(true);
+      $("backdrop").onclick = () => setDrawer(false);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") setDrawer(false);
+      });
 
       function setStepper(status) {
         if (STEPS.includes(status)) lastStage = status;
@@ -1065,6 +1237,7 @@
         const go = () => $("chat").classList.add("empty");
         document.startViewTransition ? document.startViewTransition(go) : go();
         $("question").focus();
+        setDrawer(false);
       }
       $("newChatBtn").onclick = newChat;
 
@@ -1295,6 +1468,8 @@
         $("srcGh").href = githubLink(s);
         const body = $("srcBody");
         body.textContent = "";
+        const inner = document.createElement("div");
+        inner.className = "code-inner";
         s.snippet
           .replace(/\n$/, "")
           .split("\n")
@@ -1307,11 +1482,13 @@
             const code = document.createElement("span");
             code.textContent = line || " ";
             row.append(num, code);
-            body.appendChild(row);
+            inner.appendChild(row);
           });
+        body.appendChild(inner);
         $("srcModal").hidden = false;
         $("srcClose").focus();
       }
+
       function closeSource() {
         $("srcModal").hidden = true;
       }
@@ -1324,7 +1501,6 @@
         if (e.key === "Escape") closeSource();
       });
 
-      // clicking a [n] pill or a source row opens the modal (ctrl/cmd-click still goes to GitHub)
       $("messages").addEventListener("click", (e) => {
         const link = e.target.closest("[data-src]");
         if (!link || e.ctrlKey || e.metaKey || e.shiftKey) return;
