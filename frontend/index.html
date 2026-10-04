@@ -1127,7 +1127,8 @@
       function githubLink(s) {
         const base = repo.url.replace(/\.git$/, "").replace(/\/$/, "");
         const safePath = s.path.split("/").map(encodeURIComponent).join("/");
-        return `${base}/blob/HEAD/${safePath}#L${s.start}-L${s.end}`;
+        const rendered = /\.(md|markdown|mdx|rst|adoc)$/i.test(s.path);
+        return `${base}/blob/HEAD/${safePath}${rendered ? "?plain=1" : ""}#L${s.start}-L${s.end}`;
       }
 
       function escapeHtml(s) {
