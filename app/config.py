@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     clone_timeout_s: int = 60
     db_path: str = "./repos.db"
     repo_ttl_hours: int = 0   # 0 = never expire
-    max_repos: int = 0        # 0 = no cap        
+    max_repos: int = 0        # 0 = no cap     
+    min_relevance: float = 0.55   
 
 
 settings = Settings()

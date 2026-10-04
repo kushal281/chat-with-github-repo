@@ -22,7 +22,7 @@ class GeminiClient:
                 resp = self._client.models.generate_content(
                     model=self._model,
                     contents=user,
-                    config=types.GenerateContentConfig(system_instruction=system),
+                    config=types.GenerateContentConfig(system_instruction=system, temperature=0.0),
                 )
                 break
             except Exception:

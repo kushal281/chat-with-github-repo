@@ -27,12 +27,18 @@ def cap_per_file(chunks: list[dict], max_per_file: int) -> list[dict]:
     return out
 
 
-def search(repo_id: str, question: str, k: int = 5, mode: str = "hybrid", max_per_file: int | None = None, vec_weight: float = 1.0) -> list[dict]:
+def search_scored(repo_id: str, question: str, k: int = 5, mode: str = "hybrid",
+                  max_per_file: int | None = None, vec_weight: float = 1.0) -> tuple[list[dict], float]:
     vec = query(repo_id, question, POOL)
+    best = 1 - vec[0]["distance"] / 2 if vec else 0.0
     if mode == "vector":
         merged = vec
     else:
         merged = rrf_merge([vec, bm25_query(repo_id, question, POOL)], [vec_weight, 1.0])
     if max_per_file:
         merged = cap_per_file(merged, max_per_file)
-    return merged[:k]
+    return merged[:k], best
+
+
+def search(*args, **kwargs) -> list[dict]:
+    return search_scored(*args, **kwargs)[0]  # eval and tests keep working unchanged

@@ -3,6 +3,9 @@ import re
 from app.llm.client import get_llm
 from app.llm.prompts import SYSTEM_PROMPT, build_user_prompt
 from app.retrieval.search import search
+from app.config import settings
+from app.llm.prompts import NOT_FOUND, SYSTEM_PROMPT, build_user_prompt
+from app.retrieval.search import search_scored
 
 CITATION = re.compile(r"\[([^\[\]]+?):(\d+)(?:-(\d+))?\]")
 MERGE_GAP = 3
@@ -47,7 +50,7 @@ def _parse(m: re.Match) -> tuple[str, int, int]:
 
 def answer_question(repo_id: str, question: str, history: list[dict] | None = None) -> dict:
     detailed = bool(DETAIL.search(question))
-    chunks = search(
+    chunks, best = search_scored(
         repo_id,
         _search_query(question, history),
         8 if detailed else 5,
@@ -55,6 +58,8 @@ def answer_question(repo_id: str, question: str, history: list[dict] | None = No
         max_per_file=3 if detailed else 2,
         vec_weight=2.0,
     )
+    if best < settings.min_relevance:
+        return {"answer": NOT_FOUND, "sources": []}
     text = get_llm().complete(
         SYSTEM_PROMPT, build_user_prompt(question, chunks, _clean_history(history))
     )
