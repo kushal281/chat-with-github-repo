@@ -1075,7 +1075,17 @@
         }
         body.ready main.empty {
           padding-top: 3rem;
-        } /* centers within the area below the bar */
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
       }
     </style>
   </head>
@@ -1177,6 +1187,8 @@
         $("repoName").href = r.url;
         $("repoMeta").textContent = `${r.chunk_count} chunks indexed`;
         $("topName").textContent = name;
+        $("question").placeholder = `Ask about ${name}...`;
+        document.title = `${name} · Repo Chat`;
       }
       const STEPS = ["cloning", "indexing", "ready"];
       let lastStage = "cloning";
