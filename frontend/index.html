@@ -911,6 +911,18 @@
       .msg {
         scroll-margin-top: 1rem;
       }
+
+      .ghost {
+        width: 100%;
+        margin-top: 0.75rem;
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+        font-weight: 500;
+      }
+      .ghost:hover:not(:disabled) {
+        background: var(--accent-soft);
+      }
     </style>
   </head>
 
@@ -939,6 +951,7 @@
         <div class="info-label">Indexed repo</div>
         <a id="repoName" target="_blank" rel="noopener"></a>
         <div id="repoMeta"></div>
+        <button id="newChatBtn" class="ghost">+ New chat</button>
       </div>
     </aside>
 
@@ -1042,6 +1055,19 @@
           box.appendChild(b);
         }
       }
+
+      function newChat() {
+        if ($("askBtn").disabled) return; // an answer is still loading
+        history = [];
+        $("messages").textContent = "";
+        $("question").value = "";
+        showChips();
+        const go = () => $("chat").classList.add("empty");
+        document.startViewTransition ? document.startViewTransition(go) : go();
+        $("question").focus();
+      }
+      $("newChatBtn").onclick = newChat;
+
       function setStatus(text, cls = "") {
         $("status").textContent = text;
         $("status").className = cls;
